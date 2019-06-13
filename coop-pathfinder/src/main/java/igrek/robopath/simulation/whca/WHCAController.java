@@ -145,7 +145,7 @@ public class WHCAController {
 	
 	private void randomRobotTarget(MobileRobot robot) {
 		robot.resetNextMoves();
-		//		Point start = robot.lastTarget();
+//		Point start = robot.lastTarget();
 		Point target = randomUnoccupiedCellForTarget(map);
 		// reset its initial priority
 		robot.setPriority(robot.getId());
@@ -194,13 +194,13 @@ public class WHCAController {
 	
 	
 	public synchronized void stepSimulation() {
-		//		logger.debug("next simulation step...");
+//		logger.debug("next simulation step...");
 		boolean replan = false;
 		long startTime = System.currentTimeMillis();
-		//		logger.debug("collision detection (before)...");
+//		logger.debug("collision detection (before)...");
 		resetAllCollidedRobots();
 		robotsReached.clear();
-		//		logger.debug("moving robots...");
+//		logger.debug("moving robots...");
 		for (MobileRobot robot : robots) {
 			if (robot.hasNextMove()) {
 				robot.setPosition(robot.pollNextMove());
@@ -209,7 +209,7 @@ public class WHCAController {
 				robotsReached.add(robot);
 				replan = true;
 			} else if (!robot.hasNextMove() && !robot.hasReachedTarget()) {
-				logger.debug("robot: " + robot.getId() + " has no planned moves, replanning needed");
+//				logger.debug("robot: " + robot.getId() + " has no planned moves, replanning needed");
 				replan = true;
 			}
 		}
@@ -219,10 +219,10 @@ public class WHCAController {
 		
 		List<Path> paths = new ArrayList<>();
 		if (replan) {
-			logger.debug("replanning all paths...");
+//			logger.debug("replanning all paths...");
 			paths = findPaths();
 		}
-		//		logger.debug("collision detection (after)...");
+//		logger.debug("collision detection (after)...");
 		resetAllCollidedRobots();
 		
 		if (replan) {
@@ -267,7 +267,7 @@ public class WHCAController {
 		reorderNeeded = true; // TODO reorder only when needed
 		if (reorderNeeded) {
 			Collections.sort(robots, robotsPriorityComparator);
-			logger.debug("the new order: " + Joiner.on(", ").join(robots));
+//			logger.debug("the new order: " + Joiner.on(", ").join(robots));
 			reorderNeeded = false;
 		}
 
@@ -279,7 +279,7 @@ public class WHCAController {
 	}
 	
 	public Path findPath(MobileRobot robot, ReservationTable reservationTable, TileMap map) {
-		//		logger.info("robot: " + robot.getId() + " - planning path");
+//		logger.info("robot: " + robot.getId() + " - planning path");
 		robot.resetMovesQue();
 		Point start = robot.getPosition();
 		Point target = robot.getTarget();
@@ -288,7 +288,7 @@ public class WHCAController {
 		if (target != null) {
 			WHCAPathFinder pathFinder = new WHCAPathFinder(reservationTable, map);
 			path = pathFinder.findPath(start.getX(), start.getY(), target.getX(), target.getY());
-			//			logger.debug("path planned (" + robot.toString() + "): " + path);
+//			logger.debug("path planned (" + robot.toString() + "): " + path);
 			if (path != null) {
 				// enque path
 				int t = 0;
@@ -324,7 +324,6 @@ public class WHCAController {
 		int iterations = 1;
 		while (resetCollidedRobots()) {
 			iterations++;
-			System.out.println(iterations);
 		}
 	}
 	
@@ -334,12 +333,11 @@ public class WHCAController {
 		for (MobileRobot robot : robots) {
 			MobileRobot collidedRobot = collisionDetected(robot);
 			if (collidedRobot != null) {
-				logger.debug("Collision detected between robots: " + robot.getId() + ", " + collidedRobot
-						.getId());
+//				logger.debug("Collision detected between robots: " + robot.getId() + ", " + collidedRobot.getId());
 				collidedRobots.add(new Pair<>(robot, collidedRobot));
 				collisionHappened = true;
-				//				logger.debug("robot " + robot.getId() + " previous path: " + robot.getMovesQue());
-				//				logger.debug("collidedRobot " + collidedRobot.getId() + " previous path: " + collidedRobot.getMovesQue());
+//				logger.debug("robot " + robot.getId() + " previous path: " + robot.getMovesQue());
+//				logger.debug("collidedRobot " + collidedRobot.getId() + " previous path: " + collidedRobot.getMovesQue());
 			}
 		}
 		for (Pair<MobileRobot, MobileRobot> pair : collidedRobots) {
@@ -347,12 +345,12 @@ public class WHCAController {
 			MobileRobot second = pair.getValue();
 			first.resetMovesQue();
 			second.resetMovesQue();
-			//			MobileRobot minorPriority = first.getPriority() < second.getPriority() ? first : second;
-			//			MobileRobot majorPriority = first.getPriority() < second.getPriority() ? second : first;
-			//			 priority promotion for robot with minor priority
-			//			promotePriority(minorPriority, " - due to collision");
-			//			promotePriority(majorPriority, " - due to collision");
-			//							majorPriority.setPriority(majorPriority.getPriority() - 1);
+//			MobileRobot minorPriority = first.getPriority() < second.getPriority() ? first : second;
+//			MobileRobot majorPriority = first.getPriority() < second.getPriority() ? second : first;
+//			  // priority promotion for robot with minor priority
+//			promotePriority(minorPriority, " - due to collision");
+//			promotePriority(majorPriority, " - due to collision");
+//			majorPriority.setPriority(majorPriority.getPriority() - 1);
 		}
 		return collisionHappened;
 	}
@@ -373,11 +371,11 @@ public class WHCAController {
 			return;
 		robot.setPriority(robot.getPriority() + 1);
 		reorderNeeded = true;
-		logger.debug("robot " + robot.getId() + " promoted to priority " + robot.getPriority() + reason);
+//		logger.debug("robot " + robot.getId() + " promoted to priority " + robot.getPriority() + reason);
 		if (robot.getPriority() > params.timeDimension && timeWindowScaling) {
 			params.timeDimension = robot.getPriority();
 			params.sendToUI();
-			//			logger.debug("Time dimension increased to " + params.timeDimension);
+//			logger.debug("Time dimension increased to " + params.timeDimension);
 		}
 	}
 	
