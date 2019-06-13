@@ -196,6 +196,7 @@ public class WHCAController {
 	public synchronized void stepSimulation() {
 		//		logger.debug("next simulation step...");
 		boolean replan = false;
+		long startTime = System.currentTimeMillis();
 		//		logger.debug("collision detection (before)...");
 		resetAllCollidedRobots();
 		robotsReached.clear();
@@ -215,15 +216,44 @@ public class WHCAController {
 		for (MobileRobot robot : robotsReached) {
 			robot.targetReached();
 		}
+		
+		List<Path> paths = new ArrayList<>();
 		if (replan) {
 			logger.debug("replanning all paths...");
-			findPaths();
+			paths = findPaths();
 		}
 		//		logger.debug("collision detection (after)...");
 		resetAllCollidedRobots();
+		
+		if (replan) {
+		  System.out.println("Solving Time = " + (System.currentTimeMillis() - startTime) + " ms");
+		  
+		  int makespan = 0;
+		  int moves = 0;
+		  for (Path path : paths) {
+	      int move = 0;
+		    for (int i = 0; i < path.getLength() - 1; i++) {
+		      if (path.getT(i) != i) {
+		        System.out.println("WARN: Timestep is not in order!");
+		      }
+		      if (path.getX(i) != path.getX(i + 1) || path.getY(i) != path.getY(i + 1)) {
+		        move++;
+		      }
+		    }
+		    makespan = (move > makespan)? move : makespan;
+		    moves += move;
+//        System.out.println(path);
+//        System.out.println(move);
+		  }
+		  
+		  System.out.println("Makespan = " + makespan);
+		  System.out.println("Moves = " + moves);
+		  System.out.println("Window size = " + paths.get(0).getLength());
+		}
 	}
 	
-	synchronized void findPaths() {
+	synchronized List<Path> findPaths() {
+	  List<Path> paths = new ArrayList<>();
 		calculatingPaths = true;
 		params.readFromUI();
 		int tDim = params.timeDimension;
@@ -233,28 +263,31 @@ public class WHCAController {
 			if (occupied)
 				reservationTable.setBlocked(x, y);
 		});
-		
+
 		reorderNeeded = true; // TODO reorder only when needed
 		if (reorderNeeded) {
 			Collections.sort(robots, robotsPriorityComparator);
 			logger.debug("the new order: " + Joiner.on(", ").join(robots));
 			reorderNeeded = false;
 		}
-		
+
 		for (MobileRobot robot : robots) {
-			findPath(robot, reservationTable, map);
+		  paths.add(findPath(robot, reservationTable, map));
 		}
 		calculatingPaths = false;
+		return paths;
 	}
 	
-	public void findPath(MobileRobot robot, ReservationTable reservationTable, TileMap map) {
+	public Path findPath(MobileRobot robot, ReservationTable reservationTable, TileMap map) {
 		//		logger.info("robot: " + robot.getId() + " - planning path");
 		robot.resetMovesQue();
 		Point start = robot.getPosition();
 		Point target = robot.getTarget();
+		Path path = new Path();
+		
 		if (target != null) {
 			WHCAPathFinder pathFinder = new WHCAPathFinder(reservationTable, map);
-			Path path = pathFinder.findPath(start.getX(), start.getY(), target.getX(), target.getY());
+			path = pathFinder.findPath(start.getX(), start.getY(), target.getX(), target.getY());
 			//			logger.debug("path planned (" + robot.toString() + "): " + path);
 			if (path != null) {
 				// enque path
@@ -284,12 +317,14 @@ public class WHCAController {
 				reservationTable.setBlocked(start.x, start.y);
 			}
 		}
+		return path;
 	}
 	
 	private void resetAllCollidedRobots() {
 		int iterations = 1;
 		while (resetCollidedRobots()) {
 			iterations++;
+			System.out.println(iterations);
 		}
 	}
 	
